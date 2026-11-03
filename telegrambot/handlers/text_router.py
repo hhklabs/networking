@@ -16,6 +16,14 @@ from telegrambot.handlers.maintenance import (
     restart_vpn_command,
 )
 from telegrambot.handlers.status import router_ap_command, status_command
+from telegrambot.handlers.users import (
+    adduser_command,
+    deluser_command,
+    getuser_command,
+    pause_command,
+    resume_command,
+    users_command,
+)
 from telegrambot.handlers.vpn import switch_menu_command, switch_vpn_command
 
 
@@ -120,6 +128,52 @@ async def handle_text_message(
         await fix_command(update, context)
     elif text in ["clients", "client"] or normalized == "clients":
         await clients_command(update, context)
+    elif text in [
+        "users",
+        "user",
+        "vpn users",
+        "vpn_users",
+        "/users",
+        "/list",
+    ] or normalized in ["users", "vpn_users"]:
+        await users_command(update, context)
+    elif (
+        text.startswith("adduser")
+        or text.startswith("/adduser")
+        or text.startswith("add ")
+        or text.startswith("/add ")
+    ):
+        parts = text.split()
+        context.args = parts[1:]
+        await adduser_command(update, context)
+    elif text.startswith("pause") or text.startswith("/pause"):
+        parts = text.split()
+        context.args = parts[1:]
+        await pause_command(update, context)
+    elif text.startswith("resume") or text.startswith("/resume"):
+        parts = text.split()
+        context.args = parts[1:]
+        await resume_command(update, context)
+    elif (
+        text.startswith("deluser")
+        or text.startswith("/deluser")
+        or text.startswith("del ")
+        or text.startswith("/del ")
+        or text.startswith("remove ")
+        or text.startswith("/remove ")
+    ):
+        parts = text.split()
+        context.args = parts[1:]
+        await deluser_command(update, context)
+    elif (
+        text.startswith("get ")
+        or text.startswith("/get ")
+        or text.startswith("download ")
+        or text.startswith("/download ")
+    ):
+        parts = text.split()
+        context.args = parts[1:]
+        await getuser_command(update, context)
     elif text in ["help"] or normalized == "help":
         await help_command(update, context)
     elif text in [

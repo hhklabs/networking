@@ -44,6 +44,11 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         f"• <code>restart_vpn</code> - Restart VPN connection\n"
         f"• <code>fix</code> - Auto-fix common issues\n"
         f"• <code>clients</code> - Show connected clients\n"
+        f"• <code>users</code> - Manage VPN profiles (iOS & Android)\n"
+        f"• <code>adduser &lt;name&gt; [pass]</code> - Add client profile\n"
+        f"• <code>pause / resume &lt;name&gt;</code> - Pause/resume client access\n"
+        f"• <code>deluser &lt;name&gt;</code> - Delete client profile\n"
+        f"• <code>get &lt;name&gt;</code> - Redownload client profile\n"
         f"• <code>help</code> - Show this help message\n\n"
         f"<b>Usage:</b> Send command as plain text (no / needed)"
     )

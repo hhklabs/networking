@@ -157,7 +157,7 @@ if [ "${#STAGED_PY[@]}" -gt 0 ] || [ "${#STAGED_SH[@]}" -gt 0 ]; then
     fi
 
     BOT_PYTHONPATH="${REPO_ROOT}/telegrambot/.venv/lib/python3.11/site-packages:${REPO_ROOT}"
-    if ! env PYTHONHOME="" PYTHONPATH="$BOT_PYTHONPATH" python3 -m unittest discover -s tests/bot -p "test_*.py" >/dev/null 2>&1; then
+    if ! env -u ALL_PROXY -u all_proxy PYTHONHOME="" PYTHONPATH="$BOT_PYTHONPATH" python3 -m unittest discover -s tests/bot -p "test_*.py" >/dev/null 2>&1; then
         echo -e "${RED}❌ Telegram Bot unit tests failed!${NC}"
         echo -e "   Run 'python3 -m unittest -v tests/test_telegram_bot.py' for details."
         FAILURES=$((FAILURES + 1))

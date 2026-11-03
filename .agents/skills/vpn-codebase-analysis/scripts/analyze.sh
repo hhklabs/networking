@@ -148,7 +148,7 @@ fi
 
 # 8. Telegram Bot Unit Tests
 echo -e "\n${YELLOW}[8/9] Running Telegram Bot Unit Tests...${NC}"
-if env PYTHONHOME="" PYTHONPATH="$BOT_PYTHONPATH" python3 -m unittest -v tests/test_telegram_bot.py; then
+if env -u ALL_PROXY -u all_proxy PYTHONHOME="" PYTHONPATH="$BOT_PYTHONPATH" python3 -m unittest -v tests/test_telegram_bot.py; then
     echo -e "${GREEN}✅ PASSED: All Telegram Bot unit tests succeeded.${NC}"
 else
     echo -e "${RED}❌ FAILED: Telegram Bot unit tests failed.${NC}"

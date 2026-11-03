@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Command Line Interface parser and dispatcher for Hotspot Manager."""
 
-import argparse
 import json
 import os
 import sys
 
+from .cli_parser import create_parser
 from .constants import CONFIG
 from .context import Context
 from .detection import get_connected_clients
@@ -40,13 +40,8 @@ def _acquire_cli_lock():
                 return fd
             except (BlockingIOError, OSError):
                 time.sleep(0.5)
-        holder = ""
-        try:
-            fd.seek(0)
-            holder = fd.read().strip()
-        except Exception:
-            pass
-        return holder or False
+        fd.seek(0)
+        return fd.read().strip() or False
     except Exception:
         return None
 
@@ -55,113 +50,34 @@ def main() -> None:
     ctx = Context.get()
     cfg = getattr(ctx, "CONFIG", CONFIG)
 
-    parser = argparse.ArgumentParser(
-        description="Raspberry Pi Hotspot Manager - Smart Monitoring"
-    )
-    parser.add_argument("-s", "--status", action="store_true")
-    parser.add_argument("-r", "--restart", action="store_true")
-    parser.add_argument("-rv", "--restart-vpn", action="store_true")
-    parser.add_argument("-f", "--fix", action="store_true")
-    parser.add_argument(
-        "--switch-vpn",
-        dest="switch_vpn",
-        choices=["sing0", "awg0", "tun0", "wg0", "auto"],
-        help="Switch active VPN backend",
-    )
-    parser.add_argument(
-        "--reality-server",
-        dest="reality_server",
-        choices=["1", "2", "server-1", "server-2"],
-        help="Switch primary Reality server (1: server-1, 2: server-2)",
-    )
-    parser.add_argument(
-        "--unlimited-country",
-        dest="unlimited_country",
-        help="Switch VPN Unlimited exit country (e.g. sg, jp, direct)",
-    )
-    parser.add_argument(
-        "--rotate-ip",
-        action="store_true",
-        help="Rotate to next candidate IP endpoint for active country exit",
-    )
-    parser.add_argument(
-        "--list-countries",
-        action="store_true",
-        help="List available VPN Unlimited country profiles",
-    )
-    parser.add_argument(
-        "--json",
-        action="store_true",
-        help="Output in JSON format",
-    )
-    parser.add_argument(
-        "--set-ipv6",
-        "--ipv6",
-        dest="set_ipv6",
-        choices=["drop", "reject", "off"],
-        help="Set IPv6 leak protection mode (drop, reject, off)",
-    )
-    parser.add_argument(
-        "--adguard",
-        dest="set_adguard",
-        choices=["on", "off", "enable", "disable", "status", "restart"],
-        help="Manage AdGuard Home service (on, off, status, restart)",
-    )
-    parser.add_argument("--clients", action="store_true")
-    parser.add_argument(
-        "--refresh-routes",
-        action="store_true",
-        help="Recompile and apply modular routes to AdGuard Home and ipsets",
-    )
-    parser.add_argument(
-        "--watchdog-vpn",
-        action="store_true",
-        help="Check VPN health and auto-rotate candidate IP or restart if down",
-    )
-    parser.add_argument(
-        "--watchdog",
-        action="store_true",
-        help="Run comprehensive health watchdog for both VPN and DNS resilience",
-    )
-    parser.add_argument(
-        "--watchdog-dns",
-        action="store_true",
-        help="Check AdGuard container health and auto-failover to fallback DNS if down",
-    )
-    parser.add_argument(
-        "--wan",
-        dest="wan_target",
-        choices=["eth0", "usb0", "auto", "status"],
-        help="Switch active WAN uplink (eth0, usb0, auto) or query status",
-    )
-    parser.add_argument(
-        "--telegram", action="store_true", help="Output in HTML format for Telegram"
-    )
-    parser.add_argument(
-        "--html", action="store_true", help="Output formatted as HTML for Telegram"
-    )
-
+    parser = create_parser()
     args = parser.parse_args()
     telegram_format = bool(args.telegram or args.html)
 
     if len(sys.argv) == 1:
         args.status = True
 
-    mutating = bool(
-        args.restart
-        or args.restart_vpn
-        or args.fix
-        or args.switch_vpn
-        or args.reality_server
-        or args.unlimited_country
-        or args.rotate_ip
-        or args.set_ipv6
-        or args.set_adguard
-        or args.refresh_routes
-        or args.watchdog
-        or args.watchdog_vpn
-        or args.watchdog_dns
-        or (args.wan_target and args.wan_target != "status")
+    mutating = any(
+        [
+            args.restart,
+            args.restart_vpn,
+            args.fix,
+            args.switch_vpn,
+            args.reality_server,
+            args.unlimited_country,
+            args.rotate_ip,
+            args.set_ipv6,
+            args.set_adguard,
+            args.refresh_routes,
+            args.watchdog,
+            args.watchdog_vpn,
+            args.watchdog_dns,
+            (args.wan_target and args.wan_target != "status"),
+            args.user_add,
+            args.user_pause,
+            args.user_resume,
+            args.user_del,
+        ]
     )
     if mutating:
         lock_fd = _acquire_cli_lock()
@@ -169,6 +85,22 @@ def main() -> None:
             detail = f" ({lock_fd})" if isinstance(lock_fd, str) and lock_fd else ""
             print(f"Notice: Another hotspot task is in progress{detail}. Please retry.")
             sys.exit(1)
+
+    if any(
+        [
+            args.users,
+            args.user_add,
+            args.user_pause,
+            args.user_resume,
+            args.user_del,
+            args.user_get,
+        ]
+    ):
+        from .users import handle_users_cli
+
+        sys.exit(
+            0 if handle_users_cli(args, ctx, telegram_format=telegram_format) else 1
+        )
 
     if args.refresh_routes:
         getattr(ctx, "refresh_routes", getattr(ctx, "refresh_github_routes"))()

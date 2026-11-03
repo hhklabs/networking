@@ -63,6 +63,15 @@ from telegrambot.handlers.status import (
     status_command,
 )
 from telegrambot.handlers.text_router import handle_text_message
+from telegrambot.handlers.users import (
+    adduser_command,
+    deluser_command,
+    getuser_command,
+    pause_command,
+    resume_command,
+    users_callback,
+    users_command,
+)
 from telegrambot.handlers.vpn import (
     switch_menu_command,
     switch_vpn_callback,
@@ -108,6 +117,18 @@ def create_application() -> Application:
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("ipv6", ipv6_command))
     app.add_handler(CommandHandler("adguard", adguard_command))
+    app.add_handler(CommandHandler("users", users_command))
+    app.add_handler(CommandHandler("list", users_command))
+    app.add_handler(CommandHandler("adduser", adduser_command))
+    app.add_handler(CommandHandler("add", adduser_command))
+    app.add_handler(CommandHandler("pause", pause_command))
+    app.add_handler(CommandHandler("resume", resume_command))
+    app.add_handler(CommandHandler("deluser", deluser_command))
+    app.add_handler(CommandHandler("del", deluser_command))
+    app.add_handler(CommandHandler("remove", deluser_command))
+    app.add_handler(CommandHandler("get", getuser_command))
+    app.add_handler(CommandHandler("profile", getuser_command))
+    app.add_handler(CommandHandler("download", getuser_command))
 
     # Callback query handlers
     switch_pattern = r"^(switch_.*|menu_switch|menu_vless|menu_awg|menu_ovpn)$"
@@ -130,6 +151,7 @@ def create_application() -> Application:
             router_ap_callback, pattern=r"^(menu_router_ap|ping_router)$"
         )
     )
+    app.add_handler(CallbackQueryHandler(users_callback, pattern=r"^user_"))
 
     # Plain text message handler
     app.add_handler(

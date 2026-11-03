@@ -95,6 +95,14 @@ from .remote import (
     switch_reality_server,
     switch_remote_vps_exit,
 )
+from .users import (
+    add_vpn_user,
+    delete_vpn_user,
+    get_vpn_user,
+    list_vpn_users,
+    pause_vpn_user,
+    resume_vpn_user,
+)
 from .singbox import (
     generate_singbox_config,
     get_current_singbox_endpoint_ip,
@@ -125,6 +133,12 @@ from .vpn import (
 load_goodwifi_conf()
 
 __all__ = [
+    "add_vpn_user",
+    "delete_vpn_user",
+    "get_vpn_user",
+    "list_vpn_users",
+    "pause_vpn_user",
+    "resume_vpn_user",
     "APPLY_ROUTE_SCRIPT",
     "CONFIG",
     "CUSTOM_EMOJIS",

@@ -13,6 +13,7 @@ from tests.bot.test_runner import (
     TestTelegramBotStatusHandler,
 )
 from tests.bot.test_ui import TestTelegramBotUI
+from tests.bot.test_users import TestTelegramBotUsers
 
 __all__ = [
     "TestTelegramBotConfig",
@@ -24,6 +25,7 @@ __all__ = [
     "TestTelegramBotAppCreation",
     "TestTelegramBotTextRouter",
     "TestDynamicEmojis",
+    "TestTelegramBotUsers",
 ]
 
 if __name__ == "__main__":

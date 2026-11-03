@@ -22,6 +22,7 @@ from tests.hotspot.test_vpn import (
     SingboxBackendTests,
     VpnResilienceWatchdogTests,
 )
+from tests.hotspot.test_users import TestVpnUsersManager
 from tests.hotspot.test_wan import WanResilienceTests
 
 if __name__ == "__main__":
