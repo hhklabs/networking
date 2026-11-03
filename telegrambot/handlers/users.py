@@ -2,6 +2,7 @@
 
 import io
 import json
+from typing import Any
 
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -169,6 +170,17 @@ async def getuser_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         )
 
 
+async def _safe_edit(query: Any, text: str, reply_markup: Any = None) -> None:
+    """Safely edit message ignoring Telegram 'Message is not modified' error."""
+    try:
+        await query.edit_message_text(
+            text, parse_mode="HTML", reply_markup=reply_markup
+        )
+    except Exception as e:
+        if "not modified" not in str(e).lower():
+            raise
+
+
 async def users_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle inline button callbacks for VPN user profiles."""
     query = update.callback_query
@@ -198,9 +210,7 @@ async def users_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             f"Profile ရယူရန် သို့မဟုတ် ထိန်းချုပ်ရန် အသုံးပြုသူကို နှိပ်ပါ:\n"
             f"<i>(အသစ်ထည့်ရန်: <code>/adduser &lt;name&gt; [pass]</code>)</i>"
         )
-        await query.edit_message_text(
-            text, parse_mode="HTML", reply_markup=make_users_list_keyboard(users)
-        )
+        await _safe_edit(query, text, make_users_list_keyboard(users))
 
     elif data == "user_add_prompt" and query.message:
         await query.message.reply_text(
@@ -215,12 +225,10 @@ async def users_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         uname = data.replace("user_view:", "")
         u = await fetch_user(uname)
         if not u:
-            await query.edit_message_text(f"❌ User '{uname}' not found.")
+            await _safe_edit(query, f"❌ User '{uname}' not found.")
             return
         kb = make_user_detail_keyboard(uname, u.get("status") == "active")
-        await query.edit_message_text(
-            format_user_card(u), parse_mode="HTML", reply_markup=kb
-        )
+        await _safe_edit(query, format_user_card(u), kb)
 
     elif data.startswith("user_ios:"):
         uname = data.replace("user_ios:", "")
@@ -247,26 +255,22 @@ async def users_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await execute_users_cmd(["--user-pause", uname])
         u = await fetch_user(uname) or {"username": uname, "status": "paused"}
         kb = make_user_detail_keyboard(uname, False)
-        await query.edit_message_text(
-            format_user_card(u), parse_mode="HTML", reply_markup=kb
-        )
+        await _safe_edit(query, format_user_card(u), kb)
 
     elif data.startswith("user_resume:"):
         uname = data.replace("user_resume:", "")
         await execute_users_cmd(["--user-resume", uname])
         u = await fetch_user(uname) or {"username": uname, "status": "active"}
         kb = make_user_detail_keyboard(uname, True)
-        await query.edit_message_text(
-            format_user_card(u), parse_mode="HTML", reply_markup=kb
-        )
+        await _safe_edit(query, format_user_card(u), kb)
 
     elif data.startswith("user_del_prompt:"):
         uname = data.replace("user_del_prompt:", "")
         kb = make_user_delete_confirm_keyboard(uname)
-        await query.edit_message_text(
+        await _safe_edit(
+            query,
             f"⚠️ <b>User '{uname}' ကို အပြီးဖျက်ရန် သေချာပါသလား?</b>",
-            parse_mode="HTML",
-            reply_markup=kb,
+            kb,
         )
 
     elif data.startswith("user_del_confirm:"):
@@ -278,6 +282,4 @@ async def users_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             f"🗑️ User <b>'{uname}'</b> ကို ဖျက်ပြီးပါပြီ။\n\n"
             f"Active: <b>{active}</b> | Total: <b>{len(users)}</b>"
         )
-        await query.edit_message_text(
-            text, parse_mode="HTML", reply_markup=make_users_list_keyboard(users)
-        )
+        await _safe_edit(query, text, make_users_list_keyboard(users))
