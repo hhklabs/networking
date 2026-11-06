@@ -5,6 +5,7 @@ Manages IKEv2 user credentials, generates iOS .mobileconfig profiles,
 Android settings / .sswan configs, and synchronizes with remote VPS strongSwan.
 """
 
+import base64
 import json
 import os
 import random
@@ -43,7 +44,9 @@ _VPS_TEMPLATES = {
         'grep -qE "^[#[:space:]]*{u}[[:space:]]*:" /etc/ipsec.secrets 2>/dev/null '
         '&& sed -i -E "s/^[#[:space:]]*{u}[[:space:]]*:.*/{u} : EAP \\"{p}\\"/" /etc/ipsec.secrets '
         '|| echo "{u} : EAP \\"{p}\\"" >> /etc/ipsec.secrets; '
-        "ipsec rereadsecrets 2>/dev/null || strongswan rereadsecrets 2>/dev/null || true"
+        "ipsec rereadsecrets 2>/dev/null || strongswan rereadsecrets 2>/dev/null || true; "
+        "mkdir -p /var/www/ios 2>/dev/null || true; "
+        "test -n '{mc_b64}' && echo '{mc_b64}' | base64 -d > /var/www/ios/{u}.mobileconfig 2>/dev/null || true"
     ),
     "pause": (
         'sed -i -E "s/^([[:space:]]*{u}[[:space:]]*:[[:space:]]*EAP)/# \\1/" /etc/ipsec.secrets; '
@@ -58,7 +61,7 @@ _VPS_TEMPLATES = {
         'sed -i -E "/^[#[:space:]]*{u}[[:space:]]*:[[:space:]]*EAP/d" /etc/ipsec.secrets; '
         "ipsec rereadsecrets 2>/dev/null || strongswan rereadsecrets 2>/dev/null || true; "
         "ipsec stroke down-nb ikev2-{u} 2>/dev/null || ipsec down {u} 2>/dev/null || true; "
-        "rm -f /var/www/*/ios/{u}.mobileconfig 2>/dev/null || true"
+        "rm -f /var/www/ios/{u}.mobileconfig /var/www/*/ios/{u}.mobileconfig 2>/dev/null || true"
     ),
 }
 
@@ -115,7 +118,9 @@ def save_vpn_users(users: dict[str, dict[str, Any]]) -> bool:
         return False
 
 
-def sync_vps_user(action: str, username: str, password: str = "") -> tuple[bool, str]:
+def sync_vps_user(
+    action: str, username: str, password: str = "", xml: str = ""
+) -> tuple[bool, str]:
     """Sync user creation/pause/resume/deletion with remote VPS strongSwan."""
     tmpl = _VPS_TEMPLATES.get(action)
     if not tmpl:
@@ -127,7 +132,8 @@ def sync_vps_user(action: str, username: str, password: str = "") -> tuple[bool,
         return False, "No remote VPS target configured"
 
     u_clean = re.sub(r"[^a-zA-Z0-9_-]", "", username)
-    remote_cmd = tmpl.format(u=u_clean, p=password.replace('"', '\\"'))
+    mc_b64 = base64.b64encode(xml.encode()).decode() if xml else ""
+    remote_cmd = tmpl.format(u=u_clean, p=password.replace('"', '\\"'), mc_b64=mc_b64)
 
     cmd = [
         "ssh",
@@ -166,7 +172,7 @@ def add_vpn_user(
     except Exception as e:
         return False, f"Failed to write local mobileconfig: {e}", {}
 
-    vps_ok, vps_msg = sync_vps_user("add", u_clean, final_pass)
+    vps_ok, vps_msg = sync_vps_user("add", u_clean, final_pass, xml=xml)
     users = load_vpn_users()
     record = {
         "username": u_clean,
