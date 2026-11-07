@@ -64,6 +64,8 @@ def generate_mobileconfig(
                 <string>{server}</string>
                 <key>LocalIdentifier</key>
                 <string>{user_clean}</string>
+                <key>ServerCertificateCommonName</key>
+                <string>{server}</string>
                 <key>AuthenticationMethod</key>
                 <string>None</string>
                 <key>ExtendedAuthEnabled</key>
