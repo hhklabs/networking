@@ -118,6 +118,28 @@ class RouterProxyHandlerTests(unittest.TestCase):
         mock_send_resp.assert_called_once_with(200)
         self.assertEqual(handler.wfile.getvalue(), b"")
 
+    def test_proxy_favicon_returns_204(self):
+        handler = RouterProxyHandler.__new__(RouterProxyHandler)
+        handler.target_host = "10.43.0.2"
+        handler.alias_ip = "192.168.100.2"
+        handler.path = "/favicon.ico"
+        handler.command = "GET"
+        handler.headers = {}
+        handler.rfile = io.BytesIO()
+        handler.wfile = io.BytesIO()
+
+        with (
+            patch.object(handler, "send_response") as mock_send_resp,
+            patch.object(handler, "send_header") as mock_send_hdr,
+            patch.object(handler, "end_headers") as mock_end_headers,
+        ):
+            handler.do_GET()
+
+        mock_send_resp.assert_called_once_with(204)
+        mock_send_hdr.assert_called_once_with("Content-Length", "0")
+        mock_end_headers.assert_called_once()
+        self.assertEqual(handler.wfile.getvalue(), b"")
+
     @patch("hotspot.proxy.HTTPServer")
     def test_run_proxy(self, mock_server_cls):
         mock_server = MagicMock()

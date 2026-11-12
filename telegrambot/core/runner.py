@@ -270,8 +270,11 @@ def get_vless_servers() -> list[tuple[str, str]]:
                             .get("vnext", [{}])[0]
                             .get("address", "")
                         )
+                        port = o.get("settings", {}).get("vnext", [{}])[0].get("port")
                         label = f"VLESS S{s_num}"
-                        if addr:
+                        if port == 8450:
+                            label += " (WARP)"
+                        elif addr:
                             short_ip = (
                                 ".".join(addr.split(".")[:2]) if "." in addr else addr
                             )

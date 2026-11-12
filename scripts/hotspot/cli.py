@@ -156,7 +156,11 @@ def main() -> None:
         _exit_status(getattr(ctx, "rotate_unlimited_country_ip")())
 
     if args.reality_server:
-        num = "1" if args.reality_server in ["1", "server-1"] else "2"
+        num = (
+            "3"
+            if args.reality_server in ["3", "server-3", "warp"]
+            else args.reality_server.replace("server-", "")
+        )
         _exit_status(getattr(ctx, "switch_reality_server")(num))
 
     if args.switch_vpn:

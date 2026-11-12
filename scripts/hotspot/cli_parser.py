@@ -22,8 +22,8 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--reality-server",
         dest="reality_server",
-        choices=["1", "2", "server-1", "server-2"],
-        help="Switch primary Reality server (1: server-1, 2: server-2)",
+        choices=["1", "2", "3", "server-1", "server-2", "server-3", "warp"],
+        help="Switch primary Reality server (1/2/3)",
     )
     parser.add_argument(
         "--unlimited-country",

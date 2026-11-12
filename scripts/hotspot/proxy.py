@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Lightweight HTTP reverse proxy for TP-Link Router AP web management."""
 
+import http.client
 import sys
+import threading
+import time
 import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -11,6 +14,7 @@ from .context import Context
 
 # Use ThreadingHTTPServer so hanging requests never block other clients
 HTTPServer = ThreadingHTTPServer
+_upstream_lock = threading.Lock()
 
 
 class RouterProxyHandler(BaseHTTPRequestHandler):
@@ -30,6 +34,18 @@ class RouterProxyHandler(BaseHTTPRequestHandler):
         self._proxy("POST")
 
     def _proxy(self, method: str) -> None:
+        # Browser probes that TP-Link embedded server drops/resets
+        if self.path in [
+            "/favicon.ico",
+            "/apple-touch-icon.png",
+            "/apple-touch-icon-precomposed.png",
+            "/robots.txt",
+        ]:
+            self.send_response(204)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+
         url = f"http://{self.target_host}{self.path}"
         length = self.headers.get("Content-Length")
         body = self.rfile.read(int(length)) if length and length.isdigit() else None
@@ -52,20 +68,40 @@ class RouterProxyHandler(BaseHTTPRequestHandler):
             req.add_header("Referer", f"http://{self.target_host}/userRpm/Index.htm")
 
         try:
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                self.send_response(resp.status)
-                for hk, hv in resp.headers.items():
-                    hkl = hk.lower()
-                    if hkl in ["transfer-encoding", "content-length"]:
-                        continue
-                    if hkl == "location":
-                        hv = hv.replace(self.target_host, self.alias_ip)
-                    self.send_header(hk, hv)
-                content = resp.read()
-                self.send_header("Content-Length", str(len(content)))
-                self.end_headers()
-                if method != "HEAD":
-                    self.wfile.write(content)
+            with _upstream_lock:
+                for attempt in range(2):
+                    try:
+                        with urllib.request.urlopen(req, timeout=5) as resp:
+                            self.send_response(resp.status)
+                            content = resp.read()
+                            ct = resp.headers.get("Content-Type", "")
+                            if "text" in ct or "javascript" in ct:
+                                content = content.replace(
+                                    f"http://{self.target_host}".encode(),
+                                    f"http://{self.alias_ip}".encode(),
+                                )
+                                content = content.replace(
+                                    self.target_host.encode(),
+                                    self.alias_ip.encode(),
+                                )
+
+                            for hk, hv in resp.headers.items():
+                                hkl = hk.lower()
+                                if hkl in ["transfer-encoding", "content-length"]:
+                                    continue
+                                if hkl == "location":
+                                    hv = hv.replace(self.target_host, self.alias_ip)
+                                self.send_header(hk, hv)
+                            self.send_header("Content-Length", str(len(content)))
+                            self.end_headers()
+                            if method != "HEAD":
+                                self.wfile.write(content)
+                            break
+                    except (http.client.RemoteDisconnected, ConnectionResetError):
+                        if attempt == 0:
+                            time.sleep(0.1)
+                            continue
+                        raise
         except urllib.error.HTTPError as e:
             self.send_response(e.code)
             for hk, hv in e.headers.items():
