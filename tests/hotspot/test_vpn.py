@@ -42,6 +42,18 @@ class RestartVpnTests(unittest.TestCase):
         refresh.assert_called_once_with()
         ensure_adg.assert_called_once_with()
 
+    def test_restart_vpn_with_target_arg(self):
+        with (
+            patch.object(
+                hotspot_manager, "restart_wireguard", return_value=True
+            ) as mock_wg,
+            patch.object(
+                hotspot_manager, "get_configured_backend", return_value="sing0"
+            ),
+        ):
+            self.assertTrue(hotspot_manager.restart_vpn("wg0"))
+            mock_wg.assert_called_once()
+
     def test_github_refresh_allows_sufficient_runtime(self):
         with (
             patch.object(hotspot_manager, "run_args") as run,

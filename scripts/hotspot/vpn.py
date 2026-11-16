@@ -258,7 +258,7 @@ def restart_openvpn() -> bool:
     return False
 
 
-def restart_vpn() -> bool:
+def restart_vpn(target: str | None = None) -> bool:
     ctx = Context.get()
     logger = getattr(ctx, "log", log)
     get_backend = getattr(ctx, "get_configured_backend", get_configured_backend)
@@ -272,7 +272,8 @@ def restart_vpn() -> bool:
         "tun0": getattr(ctx, "restart_openvpn", restart_openvpn),
     }
 
-    target = get_backend()
+    if not target or target == "auto":
+        target = get_backend()
     if target in rst_map:
         return rst_map[target]()
 
