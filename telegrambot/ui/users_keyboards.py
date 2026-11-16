@@ -36,15 +36,19 @@ def format_android_guide(u: dict[str, Any]) -> str:
     return (
         f"🤖 <b>Android VPN တပ်ဆင်နည်း ({uname})</b>\n"
         f"───────────────────────\n"
-        f"ဖုန်း <b>Settings > VPN</b> သို့သွားပြီး <b>+</b> နှိပ်ပါ:\n\n"
-        f"• <b>Name:</b> <code>GoodWifi ({uname})</code>\n"
+        f"<b>နည်းလမ်း (၁) - ဖုန်း Settings > VPN ဖြင့် ချိတ်ရန်:</b>\n"
         f"• <b>Type:</b> <code>IKEv2/IPSec MSCHAPv2</code>\n"
         f"• <b>Server:</b> <code>{server}</code>\n"
         f"• <b>IPSec identifier:</b> <code>{server}</code>\n"
+        f"• <b>IPSec CA cert:</b> <code>ISRG Root X1</code> (သို့မဟုတ် Unspecified)\n"
+        f"• <b>IPSec server cert:</b> <code>(Received from server)</code>\n"
         f"• <b>Username:</b> <code>{uname}</code>\n"
         f"• <b>Password:</b> <code>{pwd}</code>\n\n"
-        f"<i>(စာသားများကို တစ်ချက်နှိပ်ရုံဖြင့် Copy ကူးနိုင်ပါသည်)</i>\n"
-        f"ပြီးပါက <b>Save</b> နှိပ်ပြီး ချက်ချင်း စတင်သုံးနိုင်ပါပြီ!"
+        f"<i>(Not secure မပြစေရန် CA cert တွင် ISRG Root X1 ကို ရွေးပါ)</i>\n"
+        f"───────────────────────\n"
+        f"<b>နည်းလမ်း (၂) - strongSwan App (1-Click) ဖြင့် ချိတ်ရန်:</b>\n"
+        f"Play Store မှ <b>strongSwan VPN Client</b> သွင်းပြီး Profile ဖွင့်ပါ:\n"
+        f"🔗 <code>https://{server}/ios/{uname}.sswan</code>"
     )
 
 
