@@ -2,7 +2,7 @@
 
 import unittest
 
-from tests.bot.test_app import TestTelegramBotAppCreation
+from tests.bot.test_app import TestTelegramBotAppCreation, TestTelegramBotErrorHandler
 from tests.bot.test_clients import TestTelegramBotClients
 from tests.bot.test_config import TestTelegramBotConfig
 from tests.bot.test_dynamic_emojis import TestDynamicEmojis
@@ -23,6 +23,7 @@ __all__ = [
     "TestTelegramBotStatusHandler",
     "TestTelegramBotHealthServer",
     "TestTelegramBotAppCreation",
+    "TestTelegramBotErrorHandler",
     "TestTelegramBotTextRouter",
     "TestDynamicEmojis",
     "TestTelegramBotUsers",

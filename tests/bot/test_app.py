@@ -49,5 +49,36 @@ class TestTelegramBotAppCreation(unittest.TestCase):
                 )
 
 
+class TestTelegramBotErrorHandler(unittest.IsolatedAsyncioTestCase):
+    """Test global error handler resilience against network errors."""
+
+    async def test_error_handler_network_error_suppresses_traceback(self):
+        from telegram.error import NetworkError
+        from telegrambot.bot import _error_handler
+
+        mock_context = unittest.mock.MagicMock()
+        mock_context.error = NetworkError("Bad Gateway")
+
+        with patch("telegrambot.bot.logger") as mock_logger:
+            await _error_handler(None, mock_context)
+            mock_logger.warning.assert_called_once()
+            self.assertIn(
+                "Telegram network error encountered",
+                mock_logger.warning.call_args[0][0],
+            )
+            mock_logger.error.assert_not_called()
+
+    async def test_error_handler_generic_error_logs_exception(self):
+        from telegrambot.bot import _error_handler
+
+        mock_context = unittest.mock.MagicMock()
+        mock_context.error = RuntimeError("Unexpected crash")
+
+        with patch("telegrambot.bot.logger") as mock_logger:
+            await _error_handler(None, mock_context)
+            mock_logger.error.assert_called_once()
+            mock_logger.warning.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()

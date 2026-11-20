@@ -20,6 +20,7 @@ elif "telegrambot" not in sys.modules and not os.path.exists(
         sys.path.insert(0, _curr_dir)
 
 # flake8: noqa: E402
+from telegram.error import NetworkError
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -81,9 +82,12 @@ from telegrambot.handlers.vpn import (
 
 async def _error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Log errors caused by Updates."""
-    logger.error(
-        "Exception while handling update: %s", context.error, exc_info=context.error
-    )
+    error = getattr(context, "error", None)
+    if isinstance(error, NetworkError):
+        logger.warning("Telegram network error encountered; retrying: %s", error)
+        return
+
+    logger.error("Exception while handling update: %s", error, exc_info=error)
 
 
 async def _post_init(app: Application) -> None:

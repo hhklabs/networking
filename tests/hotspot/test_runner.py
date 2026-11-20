@@ -40,7 +40,11 @@ class StatusChecksTests(unittest.TestCase):
         with (
             patch.dict(
                 hotspot_manager.CONFIG,
-                {"dns_test_domain": "custom-domain.local", "hotspot_ip": "10.50.0.1"},
+                {
+                    "dns_test_domain": "custom-domain.local",
+                    "hotspot_ip": "10.50.0.1",
+                    "ap_mode": "hotspot",
+                },
             ),
             patch.object(
                 hotspot_manager,
